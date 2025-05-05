@@ -1,0 +1,112 @@
+## 📁 Project Structure
+
+```
+rpa-ml-trading-bot/
+├── data/
+│   ├── raw/
+│   ├── processed/
+│   └── fetch_data.py
+├── features/
+│   ├── technical_indicators.py
+│   └── feature_engineering.py
+├── models/
+│   ├── supervised/lstm_model.py
+│   ├── self_supervised/contrastive_model.py
+│   ├── reinforcement/reward_mechanism.py
+│   ├── reinforcement/ppo_agent.py
+│   ├── reinforcement/dqn_agent.py
+│   ├── reinforcement/logging_callback.py
+│   ├── reinforcement/metrics_logger.py
+│   └── train_model.py
+├── strategy/
+│   ├── strategy_logic.py
+│   └── backtesting.py
+├── rpa/
+│   ├── alpaca_bot.py
+│   └── schedule_jobs.py
+├── deployment/
+│   ├── model_api.py
+│   └── docker/Dockerfile
+├── optimization/
+│   ├── hyperparameter_tuning.py
+│   └── ensemble_models.py
+├── nlp_sentiment/sentiment_analysis.py
+├── notebooks/
+│   ├── EDA.ipynb
+│   └── Model_Training.ipynb
+├── config/settings.yaml
+├── utils/helpers.py
+├── main.py
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
+
+---
+
+## 🚀 main.py (End-to-End Loop for Live Bot Deployment)
+```python
+# main.py
+
+from data.fetch_data import fetch_live_data
+from features.technical_indicators import add_indicators
+from features.feature_engineering import preprocess_features
+from strategy.strategy_logic import generate_signals
+from rpa.alpaca_bot import execute_trade
+from models.reinforcement.ppo_agent import load_trained_model
+import time
+import pandas as pd
+
+# Load trained model
+model = load_trained_model("models/reinforcement/ppo_model.zip")
+
+# Real-time loop
+def run_bot_loop(interval_sec=300):
+    print("Starting trading bot...")
+    while True:
+        print("Fetching new data...")
+        df = fetch_live_data(ticker='AAPL')
+        df = add_indicators(df)
+        features = preprocess_features(df)
+
+        print("Generating signal using PPO model...")
+        action, _ = model.predict(features[-1:], deterministic=True)
+
+        print("Executing trade...")
+        signal = generate_signals(action)
+        execute_trade(signal)
+
+        print(f"Sleeping for {interval_sec} seconds...")
+        time.sleep(interval_sec)
+
+if __name__ == '__main__':
+    run_bot_loop()
+```
+
+---
+## ✅ Notes
+- `fetch_live_data()` must provide the most recent candle in the right format.
+- `execute_trade()` must support live trading using the Alpaca API.
+- Add your Alpaca API keys to a `.env` file or `config/settings.yaml`.
+- You can run the full bot with: `python main.py`
+
+
+## 🐳 Docker Deployment (deployment/docker/Dockerfile)
+```Dockerfile
+# Use a Python base image
+FROM python:3.10
+
+# Set working directory
+WORKDIR /app
+
+# Copy files
+COPY . /app
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Start bot
+CMD ["python", "main.py"]
+```
+
+---
