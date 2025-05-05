@@ -1,0 +1,13 @@
+## 📦 requirements.txt (ensure these are listed)
+```
+tensorflow
+matplotlib
+pandas
+yfinance
+alpaca-trade-api
+stable-baselines3
+tensorboard
+```
+
+---
+Ready for testing and deployment! ✅
